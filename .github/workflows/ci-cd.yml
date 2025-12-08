@@ -36,7 +36,6 @@ jobs:
 
       - name: Run tests & build
         run: mvn -B clean verify
-        # si quieres que falle el job en tests, quita '|| true' (aquí dejamos que falle si tests fallan)
 
       - name: Generate JaCoCo report
         run: mvn jacoco:report || true
@@ -98,14 +97,16 @@ jobs:
         with:
           image-ref: ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}
 
+      - name: Generate image info file
+        run: echo "${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}" > image.txt
+
       - name: Upload image info
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: image-info
-          path: |
-            image.txt
-        run: echo "${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}" > image.txt
+          path: image.txt
+
 
 #  deploy_k8s:
 #    needs: build_and_push
