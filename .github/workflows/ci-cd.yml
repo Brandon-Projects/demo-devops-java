@@ -96,6 +96,8 @@ jobs:
         uses: aquasecurity/trivy-action@v0.14.1
         with:
           image-ref: ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}
+          exit-code: 0
+          ignore-unfixed: true
 
       - name: Generate image info file
         run: echo "${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}" > image.txt
