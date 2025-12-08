@@ -40,8 +40,12 @@ jobs:
       - name: Generate JaCoCo report
         run: mvn jacoco:report || true
 
-      - name: SpotBugs
-        run: mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs || true
+      - name: SpotBugs (disabled – plugin resolution issue in CI)
+        run: |
+          echo "Skipping SpotBugs in GitHub Actions because plugin com.github.spotbugs:spotbugs-maven-plugin:4.7.6 no se puede resolver en Maven Central desde los runners."
+          echo "Localmente se puede ejecutar con:"
+          echo "  mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs"
+
 
       - name: Upload test reports (JUnit & Jacoco)
         if: always()
