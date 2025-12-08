@@ -107,29 +107,36 @@ jobs:
             image.txt
         run: echo "${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}" > image.txt
 
-  deploy_k8s:
-    needs: build_and_push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#  deploy_k8s:
+#    needs: build_and_push
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Setup kubectl
+#        uses: azure/setup-kubectl@v3
+#        with:
+#          version: '1.27.3'
+#
+#      - name: Configure kubeconfig
+#        run: |
+#          echo "${{ secrets.KUBECONFIG }}" > kubeconfig
+#          chmod 600 kubeconfig
+#          export KUBECONFIG=$PWD/kubeconfig
+#          kubectl config view
+#
+#      - name: Deploy to Kubernetes
+#        env:
+#          IMAGE: ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}
+#        run: |
+#          export KUBECONFIG=$PWD/kubeconfig
+#          sed "s|__IMAGE__|${IMAGE}|g" k8s/deployment.yaml | kubectl apply -f -
+#          kubectl -n default rollout status deployment/demo-devops-java --timeout=120s || (kubectl -n default describe deploy demo-devops-java && kubectl -n default logs -l app=demo-devops-java --tail=200 && exit 1)
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: '1.27.3'
-
-      - name: Configure kubeconfig
-        run: |
-          echo "${{ secrets.KUBECONFIG }}" > kubeconfig
-          chmod 600 kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
-          kubectl config view
-
-      - name: Deploy to Kubernetes
-        env:
-          IMAGE: ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}
-        run: |
-          export KUBECONFIG=$PWD/kubeconfig
-          sed "s|__IMAGE__|${IMAGE}|g" k8s/deployment.yaml | kubectl apply -f -
-          kubectl -n default rollout status deployment/demo-devops-java --timeout=120s || (kubectl -n default describe deploy demo-devops-java && kubectl -n default logs -l app=demo-devops-java --tail=200 && exit 1)
+# ============================
+# DEPLOY A KUBERNETES (DESACTIVADO)
+# ============================
+# GitHub Actions NO puede acceder a clusters locales (kind).
+# Por eso este job está comentado. En un entorno real se apuntaría
+# a un cluster remoto AKS/EKS/GKE y funcionaría automáticamente.
