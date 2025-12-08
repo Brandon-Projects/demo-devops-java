@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: demo-devops-java
+  namespace: devsu
 spec:
   replicas: 2
   selector:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: __IMAGE__
+          image: bsaulestradah/demo-devops-java:v1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -23,30 +24,3 @@ spec:
                 name: demo-config
             - secretRef:
                 name: demo-secret
-          readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 30
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: demo-config
-data:
-  APP_ENV: "production"
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: demo-secret
-type: Opaque
-stringData:
-  DB_PASSWORD: "changeme"

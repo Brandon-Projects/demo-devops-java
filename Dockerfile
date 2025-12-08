@@ -1,0 +1,29 @@
+# Stage 1: build with Maven
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+WORKDIR /workspace
+COPY pom.xml .
+COPY .mvn .mvn
+COPY mvnw mvnw
+RUN chmod +x mvnw || true
+COPY src ./src
+RUN mvn -B clean package -DskipTests
+
+# Stage 2: runtime
+FROM eclipse-temurin:17-jre
+ARG APP_HOME=/opt/app
+WORKDIR ${APP_HOME}
+COPY --from=builder /workspace/target/*.jar app.jar
+
+# non-root user
+RUN addgroup --system app && adduser --system --ingroup app app \
+ && chown -R app:app ${APP_HOME}
+USER app
+
+ENV JAVA_OPTS=""
+ENV PORT=8080
+EXPOSE ${PORT}
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
+  CMD wget --spider --quiet http://localhost:${PORT}/actuator/health || wget --spider --quiet http://localhost:${PORT}/api/users || exit 1
+
+ENTRYPOINT ["sh","-c","exec java $JAVA_OPTS -jar app.jar --server.port=${PORT}"]

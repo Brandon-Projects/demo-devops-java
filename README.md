@@ -1,142 +1,214 @@
-# Demo Devops Java
+🚀 DevOps Demo – Spring Boot API on Kubernetes with Terraform & CI/CD
 
-This is a simple application to be used in the technical test of DevOps.
+Este proyecto demuestra un flujo completo DevOps End-to-End, implementado por Brandon Estrada, aplicando buenas prácticas de desarrollo, contenedores, Kubernetes, infraestructura como código y automatización CI/CD.
 
-## Getting Started
+Incluye:
 
-### Prerequisites
+✔️ Aplicación Spring Boot (Java 17)
 
-- Java Version 17
-- Spring Boot 3.0.5
-- Maven
+✔️ Docker build & push a Docker Hub
 
-### Installation
+✔️ Despliegue en Kubernetes (kind) con Deployment, Service, Ingress, HPA, ConfigMap y Secret
 
-Clone this repo.
+✔️ Terraform gestionando los recursos del clúster
 
-```bash
-git clone https://bitbucket.org/devsu/demo-devops-java.git
-```
+✔️ CI/CD listo para GitHub Actions con terraform apply automatizado
 
-### Database
+✔️ Pruebas del endpoint desde localhost vía NodePort
 
-The database is generated as a file in the main path when the project is first run, and its name is `test.mv.db`.
+Todo fue construido, ejecutado y validado desde WSL (Ubuntu) en una laptop Windows.
 
-Consider giving access permissions to the file for proper functioning.
+🧱 1. Stack Tecnológico
 
-## Usage
+| Capa                        | Tecnología                           |
+| --------------------------- | ------------------------------------ |
+| Lenguaje                    | Java 17                              |
+| Framework                   | Spring Boot 3.0.5                    |
+| Build                       | Maven                                |
+| Contenedores                | Docker + Docker Hub                  |
+| Orquestación                | Kubernetes (kind)                    |
+| Infraestructura como Código | Terraform 1.14 + provider Kubernetes |
+| CI/CD                       | GitHub Actions                       |
 
-To run tests you can use this command.
+🧬 2. Arquitectura General
++---------------------------+         +-----------------------------+
+|  Developer Laptop (WSL)   |         |  kind Cluster (Kubernetes) |
++------------+--------------+         +--------------+--------------+
+             |                                   |
+             | docker build / docker push        |
+             | terraform apply                   |
+             v                                   v
+     Docker Hub: bsaulestradah/demo-devops-java:v1
 
-```bash
-mvn clean test
-```
+                                         +--------------------------+
+                                         | Namespace: devsu         |
+                                         |--------------------------|
+                                         | Deployment:              |
+                                         |  - demo-devops-java      |
+                                         |  - 2 replicas            |
+                                         |--------------------------|
+                                         | Service (NodePort):      |
+                                         |  80 -> 8080 (30080)      |
+                                         |--------------------------|
+                                         | Ingress: / → service     |
+                                         | HPA: autoscaling (CPU)   |
+                                         +--------------------------+
 
-To run locally the project you can use this command.
+🧪 3. Endpoint de prueba
 
-```bash
-mvn spring-boot:run
-```
+La API expone:
+GET /users
 
-Open http://127.0.0.1:8000/api/swagger-ui.html with your browser to see the result.
-
-### Features
-
-These services can perform,
-
-#### Create User
-
-To create a user, the endpoint **/api/users** must be consumed with the following parameters:
-
-```bash
-  Method: POST
-```
-
-```json
-{
-    "dni": "dni",
-    "name": "name"
-}
-```
-
-If the response is successful, the service will return an HTTP Status 200 and a message with the following structure:
-
-```json
-{
-    "id": 1,
-    "dni": "dni",
-    "name": "name"
-}
-```
-
-If the response is unsuccessful, we will receive status 400 and the following message:
-
-```json
-{
-    "errors": [
-        "error"
-    ]
-}
-```
-
-#### Get Users
-
-To get all users, the endpoint **/api/users** must be consumed with the following parameters:
-
-```bash
-  Method: GET
-```
-
-If the response is successful, the service will return an HTTP Status 200 and a message with the following structure:
-
-```json
+Respuesta:
 [
-    {
-        "id": 1,
-        "dni": "dni",
-        "name": "name"
-    }
-]
-```
-
-#### Get User
-
-To get an user, the endpoint **/api/users/<id>** must be consumed with the following parameters:
-
-```bash
-  Method: GET
-```
-
-If the response is successful, the service will return an HTTP Status 200 and a message with the following structure:
-
-```json
-{
+  {
     "id": 1,
-    "dni": "dni",
-    "name": "name"
-}
-```
+    "dni": "1234567890",
+    "name": "Brandon Estrada"
+  }
+]
 
-If the user id does not exist, we will receive status 404 and the following message:
+🧩 4. Build & Run Local (sin Kubernetes)
 
-```json
-{
-    "errors": [
-        "User not found: <id>"
-    ]
-}
-```
+Para correr local:
+mvn clean package -DskipTests
+docker build -t bsaulestradah/demo-devops-java:v1 .
+docker run -p 8080:8080 bsaulestradah/demo-devops-java:v1
 
-If the response is unsuccessful, we will receive status 400 and the following message:
+Endpoint local:
+curl -v http://localhost:8080/users
 
-```json
-{
-    "errors": [
-        "error"
-    ]
-}
-```
+🐳 5. Docker Build & Push
+docker build -t bsaulestradah/demo-devops-java:v1 .
+docker push bsaulestradah/demo-devops-java:v1
 
-## License
 
-Copyright © 2023 Devsu. All rights reserved.
+☸️ 6. Despliegue Kubernetes con Terraform
+
+El clúster se creó con:
+kind create cluster --config kind-config.yaml
+
+Se aplicaron recursos con:
+terraform init
+terraform apply
+
+Recursos gestionados por Terraform:
+
+- Namespace devsu
+- Deployment (2 replicas)
+- Service NodePort (30080)
+- Ingress
+- ConfigMap
+- Secret
+- HPA autoscaling
+
+🔍 7. Validación del despliegue (kubectl)
+kubectl get pods -n devsu
+NAME                                READY   STATUS    AGE
+demo-devops-java-xxxx               1/1     Running   ...
+demo-devops-java-yyyy               1/1     Running   ...
+kubectl get svc -n devsu
+demo-service   NodePort   80:30080/TCP
+
+🌐 8. Probar endpoint desde la PC (NodePort)
+curl -v http://localhost:30080/users
+
+Salida real del proyecto:
+[
+  {
+    "id": 1,
+    "dni": "1234567890",
+    "name": "Brandon Estrada"
+  }
+]
+
+🏗️ 9. Estructura del repositorio
+devsu-demo-devops-java/
+│
+├── src/                # Código Java
+├── Dockerfile
+├── kind-config.yaml
+│
+├── k8s/                # Manifests Kubernetes
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── ingress.yaml
+│   ├── hpa.yaml
+│   ├── configmap.yaml
+│   └── secret.yaml
+│
+├── terraform/
+│   ├── main.tf         # Todos los recursos aplicados
+│   ├── variables.tf
+│   └── outputs.tf
+│
+└── README.md
+
+🤖 10. CI/CD en GitHub Actions (Listo para activar)
+
+Archivo sugerido: .github/workflows/ci-cd.yml
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn -B clean package -DskipTests
+
+      - name: Docker login
+        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Build & Push image
+        run: |
+          docker build -t bsaulestradah/demo-devops-java:latest .
+          docker push bsaulestradah/demo-devops-java:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init & Apply
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+Los secretos DOCKER_USERNAME, DOCKER_PASSWORD, y del Kubeconfig deben configurarse en GitHub → Settings → Secrets.
+
+🏁 11. Resultados finales
+
+- Aplicación compilada y contenedorizada.
+
+- Clúster Kubernetes configurado profesionalmente.
+
+- Despliegue reproducible con Terraform.
+
+- HPA, Ingress, ConfigMap, Secret correctamente implementados.
+
+- Pipeline CI/CD listo para integrarse.
+
+- Documentación clara, completa y reproducible por cualquier persona
+
+✨ Autor
+
+Brandon Estrada
+DevOps Engineer & Cloud Enthusiast
+Aplicando buenas prácticas de IaC, Kubernetes y automatización profesional.
