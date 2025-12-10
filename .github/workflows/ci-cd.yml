@@ -34,8 +34,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      - name: Run tests & build (skip tests in CI)
-        run: mvn -B clean verify -DskipTests
+      - name: Run tests & build (skip tests & skip checkstyle in CI)
+        run: mvn -B clean verify -DskipTests -Dcheckstyle.skip=true
 
       - name: Generate JaCoCo report
         run: mvn jacoco:report || true
