@@ -97,7 +97,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@v0.14.1
+        uses: aquasecurity/trivy-action@v0.19.0
         with:
           image-ref: ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE_NAME }}:${{ needs.build_test_scan.outputs.image-tag }}
           exit-code: 0
