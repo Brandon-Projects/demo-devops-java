@@ -1,135 +1,125 @@
-🚀 DevOps Demo – Spring Boot API on Kubernetes with Terraform & CI/CD
+🚀 DevOps End-to-End Platform – Spring Boot API on Docker, Kubernetes, Terraform & CI/CD
 
-Este proyecto demuestra un flujo completo DevOps End-to-End, implementado por Brandon Estrada, aplicando buenas prácticas de desarrollo, contenedores, Kubernetes, infraestructura como código y automatización CI/CD.
+Autor: Brandon Estrada – DevOps Engineer | Cloud | IaC | CI/CD
+
+Este proyecto demuestra un flujo moderno DevOps End-to-End utilizando contenedores, Kubernetes, infraestructura como código, automatización CI/CD y buenas prácticas de despliegue.
+
+El objetivo fue construir, contenedorizAR, publicar y desplegar una API Java en un clúster Kubernetes, aplicando herramientas reales usadas en empresas de alto nivel (FinTech, banca digital, SaaS, etc.).
 
 Incluye:
 
-✔️ Aplicación Spring Boot (Java 17)
-
-✔️ Docker build & push a Docker Hub
-
-✔️ Despliegue en Kubernetes (kind) con Deployment, Service, Ingress, HPA, ConfigMap y Secret
-
-✔️ Terraform gestionando los recursos del clúster
-
-✔️ CI/CD listo para GitHub Actions con terraform apply automatizado
-
-✔️ Pruebas del endpoint desde localhost vía NodePort
-
-Todo fue construido, ejecutado y validado desde WSL (Ubuntu) en una laptop Windows.
+✔️ Spring Boot API (Java 17)
+✔️ Docker multi-stage + Push a DockerHub
+✔️ Kubernetes Deployment + Service + Ingress + HPA + ConfigMap + Secret
+✔️ Terraform administrando recursos del clúster
+✔️ CI/CD completo para build, push y apply infra
+✔️ Prueba local vía NodePort y port-forward
+✔️ Proyecto ejecutado completamente en WSL2 Ubuntu
 
 🧱 1. Stack Tecnológico
-
-| Capa                        | Tecnología                           |
-| --------------------------- | ------------------------------------ |
-| Lenguaje                    | Java 17                              |
-| Framework                   | Spring Boot 3.0.5                    |
-| Build                       | Maven                                |
-| Contenedores                | Docker + Docker Hub                  |
-| Orquestación                | Kubernetes (kind)                    |
-| Infraestructura como Código | Terraform 1.14 + provider Kubernetes |
-| CI/CD                       | GitHub Actions                       |
+| Capa                 | Tecnología                             |
+| -------------------- | -------------------------------------- |
+| Lenguaje             | Java 17                                |
+| Framework            | Spring Boot 3.0.5                      |
+| Base de datos        | H2 (in-memory) + schema.sql + data.sql |
+| Build                | Maven                                  |
+| Contenedores         | Docker                                 |
+| Registro de imágenes | Docker Hub                             |
+| Orquestación         | Kubernetes (kind)                      |
+| IaC                  | Terraform 1.14                         |
+| CI/CD                | GitHub Actions                         |
+| Seguridad            | Trivy (image scanning)                 |
 
 🧬 2. Arquitectura General
 +---------------------------+         +-----------------------------+
-|  Developer Laptop (WSL)   |         |  kind Cluster (Kubernetes) |
-+------------+--------------+         +--------------+--------------+
-             |                                   |
-             | docker build / docker push        |
-             | terraform apply                   |
-             v                                   v
-     Docker Hub: bsaulestradah/demo-devops-java:v1
-
-                                         +--------------------------+
-                                         | Namespace: devsu         |
-                                         |--------------------------|
-                                         | Deployment:              |
-                                         |  - demo-devops-java      |
-                                         |  - 2 replicas            |
-                                         |--------------------------|
-                                         | Service (NodePort):      |
-                                         |  80 -> 8080 (30080)      |
-                                         |--------------------------|
-                                         | Ingress: / → service     |
-                                         | HPA: autoscaling (CPU)   |
-                                         +--------------------------+
+| Developer Laptop (WSL2)  |         | KIND Kubernetes Cluster     |
+|---------------------------|         |-----------------------------|
+| mvn clean package        |         | Namespace: devsu            |
+| docker build/push        |  --->   | Deployment: 2 replicas      |
+| terraform apply          |         | Service NodePort            |
++---------------------------+         | Ingress (routing)           |
+                                      | HPA (autoscaling)           |
+                                      | ConfigMap + Secret          |
+                                      +-----------------------------+
+Registro:
+Docker Hub → bsaulestradah/demo-devops-java:v1
 
 🧪 3. Endpoint de prueba
 
-La API expone:
+La API expone un único endpoint:
+
 GET /users
 
-Respuesta:
+Respuesta esperada:
 [
-  {
-    "id": 1,
-    "dni": "1234567890",
-    "name": "Brandon Estrada"
-  }
+  { "id": 1, "dni": "1234567890", "name": "Brandon Estrada" },
+  { "id": 2, "dni": "9876543210", "name": "Devsu Candidate" }
 ]
 
 🧩 4. Build & Run Local (sin Kubernetes)
-
-Para correr local:
 mvn clean package -DskipTests
 docker build -t bsaulestradah/demo-devops-java:v1 .
 docker run -p 8080:8080 bsaulestradah/demo-devops-java:v1
 
-Endpoint local:
-curl -v http://localhost:8080/users
+
+Probar:
+curl http://localhost:8080/users
 
 🐳 5. Docker Build & Push
 docker build -t bsaulestradah/demo-devops-java:v1 .
 docker push bsaulestradah/demo-devops-java:v1
 
+☸️ 6. Despliegue Kubernetes con Terraform (Infraestructura como Código)
 
-☸️ 6. Despliegue Kubernetes con Terraform
-
-El clúster se creó con:
+El clúster de Kubernetes se creó con kind:
 kind create cluster --config kind-config.yaml
 
-Se aplicaron recursos con:
+Terraform maneja:
+
+✔️ Namespace
+✔️ Deployment (2 replicas)
+✔️ Service NodePort
+✔️ Ingress controller
+✔️ ConfigMap
+✔️ Secret
+✔️ Autoscaling con HPA
+
+Ejecutar:
+
 terraform init
-terraform apply
+terraform apply -auto-approve
 
-Recursos gestionados por Terraform:
-
-- Namespace devsu
-- Deployment (2 replicas)
-- Service NodePort (30080)
-- Ingress
-- ConfigMap
-- Secret
-- HPA autoscaling
-
-🔍 7. Validación del despliegue (kubectl)
+🔍 7. Validación del despliegue
+Pods
 kubectl get pods -n devsu
-NAME                                READY   STATUS    AGE
-demo-devops-java-xxxx               1/1     Running   ...
-demo-devops-java-yyyy               1/1     Running   ...
-kubectl get svc -n devsu
-demo-service   NodePort   80:30080/TCP
 
-🌐 8. Probar endpoint desde la PC (NodePort)
-curl -v http://localhost:30080/users
+Resultado esperado:
+demo-devops-java-xxxx   1/1   Running
+demo-devops-java-yyyy   1/1   Running
+
+Service
+kubectl get svc -n devsu
+
+
+Ejemplo:
+demo-service NodePort 80:30080/TCP
+
+Probar desde la PC
+curl http://localhost:30080/users
 
 Salida real del proyecto:
 [
-  {
-    "id": 1,
-    "dni": "1234567890",
-    "name": "Brandon Estrada"
-  }
+  { "id": 1, "dni": "1234567890", "name": "Brandon Estrada" }
 ]
 
-🏗️ 9. Estructura del repositorio
+🏗️ 8. Estructura del repositorio
 devsu-demo-devops-java/
 │
-├── src/                # Código Java
-├── Dockerfile
-├── kind-config.yaml
+├── src/                      # Código Java Spring Boot
 │
-├── k8s/                # Manifests Kubernetes
+├── Dockerfile                # Imagen multi-stage
+│
+├── k8s/                      # Manifests Kubernetes
 │   ├── deployment.yaml
 │   ├── service.yaml
 │   ├── ingress.yaml
@@ -137,17 +127,27 @@ devsu-demo-devops-java/
 │   ├── configmap.yaml
 │   └── secret.yaml
 │
-├── terraform/
-│   ├── main.tf         # Todos los recursos aplicados
+├── terraform/                # Infraestructura como Código
+│   ├── main.tf
 │   ├── variables.tf
 │   └── outputs.tf
 │
+├── .github/workflows/
+│   └── ci-cd.yml             # Pipeline GitHub Actions
+│
 └── README.md
 
-🤖 10. CI/CD en GitHub Actions (Listo para activar)
+🤖 9. CI/CD en GitHub Actions (Automatización Completa)
 
-Archivo sugerido: .github/workflows/ci-cd.yml
+Pipeline configurado para:
 
+✔️ Compilar con Maven
+✔️ Escanear seguridad con Trivy
+✔️ Construir imagen Docker
+✔️ Empujar a Docker Hub
+✔️ Ejecutar Terraform apply
+
+Fragmento del pipeline:
 name: CI/CD Pipeline
 
 on:
@@ -177,38 +177,24 @@ jobs:
           docker build -t bsaulestradah/demo-devops-java:latest .
           docker push bsaulestradah/demo-devops-java:latest
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+🏁 10. Resultados Finales — Qué logramos
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+✔️ Aplicación Java funcional y completamente contenedorizada
+✔️ Imagen Docker optimizada con multi-stage build
+✔️ Despliegue robusto en Kubernetes con:
 
-      - name: Terraform Init & Apply
-        run: |
-          terraform init
-          terraform apply -auto-approve
+- Deployment
+- Service
+- Ingress
+- Autoscaling (HPA)
+- ConfigMap + Secret
 
-Los secretos DOCKER_USERNAME, DOCKER_PASSWORD, y del Kubeconfig deben configurarse en GitHub → Settings → Secrets.
-
-🏁 11. Resultados finales
-
-- Aplicación compilada y contenedorizada.
-
-- Clúster Kubernetes configurado profesionalmente.
-
-- Despliegue reproducible con Terraform.
-
-- HPA, Ingress, ConfigMap, Secret correctamente implementados.
-
-- Pipeline CI/CD listo para integrarse.
-
-- Documentación clara, completa y reproducible por cualquier persona
+✔️ Terraform como IaC administrando todos los recursos
+✔️ CI/CD profesional listo para empresas
+✔️ Proyecto totalmente reproducible en cualquier laptop
 
 ✨ Autor
 
 Brandon Estrada
 DevOps Engineer & Cloud Enthusiast
-Aplicando buenas prácticas de IaC, Kubernetes y automatización profesional.
+Diseñando soluciones reproducibles, escalables y seguras en Kubernetes + IaC + CI/CD.
