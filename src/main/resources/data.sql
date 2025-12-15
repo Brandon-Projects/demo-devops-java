@@ -1,1 +1,3 @@
-INSERT INTO users (dni, name) VALUES ('0123456789', 'devsuvian 1');
+INSERT INTO users (dni, name) VALUES
+('1234567890', 'Brandon Estrada'),
+('9876543210', 'Devsu Candidate');
