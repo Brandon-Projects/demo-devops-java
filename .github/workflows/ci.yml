@@ -1,0 +1,37 @@
+name: CI Pipeline - Demo DevOps Java
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build-test-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build and run tests
+      run: mvn clean verify
+
+    - name: Log in to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build Docker image
+      run: |
+        docker build -t bsaulestradah/demo-devops-java:${{ github.sha }} .
+
+    - name: Push Docker image
+      run: |
+        docker push bsaulestradah/demo-devops-java:${{ github.sha }}
