@@ -1,50 +1,96 @@
-🚀 DevOps End-to-End Platform – Spring Boot API on Docker, Kubernetes, Terraform & CI/CD
+🚀 DevOps End-to-End Platform
 
-Autor: Brandon Estrada – DevOps Engineer | Cloud | IaC | CI/CD
+Spring Boot API on Docker, Kubernetes, Terraform & CI/CD
 
-Este proyecto demuestra un flujo DevOps moderno de extremo a extremo, integrando:
-- Contenedores Docker
-- Kubernetes (kind)
-- Infraestructura como Código (Terraform)
-- CI/CD profesional en GitHub Actions
-- Escaneo de seguridad, autoscaling y buenas prácticas de despliegue
+Autor: Brandon Estrada
+DevOps Engineer | Cloud | IaC | CI/CD
 
-El objetivo es construir, contenedizar, publicar y desplegar una API en un clúster Kubernetes, siguiendo estándares usados en empresas FinTech, banca, SaaS y tecnología de alto nivel.
+🧭 Executive Summary
+
+Este proyecto demuestra un flujo DevOps moderno de extremo a extremo, diseñado bajo principios utilizados en entornos FinTech, banca y SaaS de alta criticidad.
+
+La solución cubre todo el ciclo de vida de una aplicación:
+- build
+- contenedorización
+- análisis de seguridad
+- despliegue automatizado
+- escalamiento
+- operación en Kubernetes
+
+El enfoque principal no es solo “hacer que funcione”, sino hacerlo reproducible, escalable, seguro y operable.
 
 🧱 1. Stack Tecnológico
-| Capa                 | Tecnología                             |
-| -------------------- | -------------------------------------- |
-| Lenguaje             | Java 17                                |
-| Framework            | Spring Boot 3.0.5                      |
-| Base de datos        | H2 (in-memory) + schema.sql + data.sql |
-| Build                | Maven                                  |
-| Contenedores         | Docker (multi-stage)                   |
-| Registro de imágenes | Docker Hub                             |
-| Orquestación         | Kubernetes (kind)                      |
-| IaC                  | Terraform 1.14                         |
-| CI/CD                | GitHub Actions                         |
-| Seguridad            | Trivy (image scanning)                 |
+| Capa                        | Tecnología             |
+| --------------------------- | ---------------------- |
+| Lenguaje                    | Java 17                |
+| Framework                   | Spring Boot 3.0.5      |
+| Base de datos               | H2 (in-memory)         |
+| Build                       | Maven                  |
+| Contenedores                | Docker (multi-stage)   |
+| Registro de imágenes        | Docker Hub             |
+| Orquestación                | Kubernetes (kind)      |
+| Infraestructura como Código | Terraform 1.14         |
+| CI/CD                       | GitHub Actions         |
+| Seguridad                   | Trivy (image scanning) |
 
 🧬 2. Arquitectura General
-+------------------------------+        +---------------------------------+
-|     Developer Laptop (WSL2)  |        |      KIND Kubernetes Cluster     |
-|------------------------------|        |---------------------------------|
-| mvn clean package            |        | Namespace: devsu                |
-| docker build / docker push   | ---->  | Deployment: 2 replicas          |
-| terraform apply              |        | Service: NodePort (30080)       |
-+------------------------------+        | Ingress routing                  |
-                                        | HPA autoscaling                  |
-                                        | ConfigMap + Secret               |
-                                        +----------------------------------+
-Registro de imágenes:
-docker.io/bsaulestradah/demo-devops-java:v1
+┌───────────────────────────┐
+│ Developer Workstation     │
+│ (WSL2 + Docker + Terraform│
+│ + GitHub Actions)         │
+└─────────────┬─────────────┘
+              │
+              ▼
+┌───────────────────────────┐
+│ Docker Hub                │
+│ (Image Registry)          │
+│ demo-devops-java:v1       │
+└─────────────┬─────────────┘
+              │
+              ▼
+┌──────────────────────────────────────────┐
+│ Kubernetes Cluster (kind)                 │
+│ Namespace: devsu                          │
+│                                          │
+│  ┌───────────────┐   ┌───────────────┐  │
+│  │ Pod (Replica) │   │ Pod (Replica) │  │
+│  │ Spring Boot   │   │ Spring Boot   │  │
+│  └───────┬───────┘   └───────┬───────┘  │
+│          │                   │          │
+│      ┌───▼───────────────────▼───┐      │
+│      │ Service (NodePort)         │      │
+│      └───────────┬───────────────┘      │
+│                  │                      │
+│            ┌─────▼─────┐                │
+│            │ Ingress   │                │
+│            └───────────┘                │
+│                                          │
+│ ConfigMap | Secret | HPA (Autoscaling)   │
+└──────────────────────────────────────────┘
+🧠 Componentes y Flujo
+
+Developer Workstation
+- Construye la app (Maven)
+- Genera la imagen Docker
+- Aplica infraestructura con Terraform
+- CI/CD se ejecuta en GitHub Actions
+
+Docker Hub
+- Almacena la imagen versionada
+- Fuente única de verdad para despliegues
+
+Kubernetes (kind)
+- Namespace aislado (devsu)
+- Deployment con múltiples réplicas
+- Service expone la aplicación
+- Ingress gestiona routing
+- HPA escala automáticamente
+- ConfigMap y Secret desacoplan configuración
 
 🧪 3. Endpoint de prueba
 
 GET /users
-
-Respuesta real del proyecto:
-
+Respuesta real:
 [
   { "id": 1, "dni": "1234567890", "name": "Brandon Estrada" },
   { "id": 2, "dni": "9876543210", "name": "Devsu Candidate" }
@@ -55,130 +101,84 @@ mvn clean package -DskipTests
 docker build -t bsaulestradah/demo-devops-java:v1 .
 docker run -p 8080:8080 bsaulestradah/demo-devops-java:v1
 
+Validar:
 
-Probar:
 curl http://localhost:8080/users
 
-🐳 5. Publicar imagen en Docker Hub
-docker build -t bsaulestradah/demo-devops-java:v1 .
-docker push bsaulestradah/demo-devops-java:v1
+☸️ 5. Infraestructura como Código (Terraform)
 
-☸️ 6. Despliegue Kubernetes con Terraform (IaC)
-Crear clúster kind:
-kind create cluster --config kind-config.yaml
-
-Terraform administra:
-
+Terraform administra de forma declarativa:
 ✔ Namespace
-✔ Deployment (réplicas)
+✔ Deployment con réplicas
 ✔ Service NodePort
 ✔ Ingress
-✔ HPA autoscaling
+✔ Horizontal Pod Autoscaler
 ✔ ConfigMap
 ✔ Secret
 
-Aplicar infra:
+Aplicación:
 terraform init
-terraform apply -auto-approve
+terraform apply
 
-🔍 7. Validación del despliegue
-Pods:
-kubectl get pods -n devsu
+Este enfoque permite reproducibilidad total del entorno, evitando configuraciones manuales.
 
+📈 6. Escalabilidad y Alta Disponibilidad
 
-Esperado:
-demo-devops-java-xxxx   1/1   Running
-demo-devops-java-yyyy   1/1   Running
+- 2 réplicas mínimas
+- Autoscaling horizontal (HPA) basado en CPU
+- Preparado para crecer hasta 5 pods
 
-Service:
-kubectl get svc -n devsu
+Esto asegura:
+- tolerancia a fallos
+- balanceo de carga
+- elasticidad bajo demanda
 
+🤖 7. CI/CD con GitHub Actions
 
-Ejemplo:
-demo-service   NodePort   80:30080/TCP
+El pipeline implementa:
 
-Probar desde la PC:
-curl http://localhost:30080/users
-
-🏗️ 8. Estructura del Repositorio
-devsu-demo-devops-java/
-│
-├── src/                       # Código Java Spring Boot
-│
-├── Dockerfile                 # Build multi-stage
-│
-├── k8s/                       # Kubernetes manifests
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── ingress.yaml
-│   ├── hpa.yaml
-│   ├── configmap.yaml
-│   └── secret.yaml
-│
-├── terraform/                 # Infraestructura como Código
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-│
-└── .github/workflows/
-    └── ci-cd.yml              # Pipeline CI/CD
-
-🤖 9. CI/CD en GitHub Actions
-
-El pipeline realiza:
-
-✔ Maven build
-✔ Escaneo de seguridad con Trivy
+✔ Build con Maven
+✔ Análisis de seguridad con Trivy
 ✔ Docker build
 ✔ Push automático a Docker Hub
-✔ Terraform apply
+✔ Infraestructura versionada
 
-Fragmento del pipeline:
-name: CI/CD Pipeline
+Pipeline definido como código en:
+.github/workflows/ci.yml
 
-on:
-  push:
-    branches: [ "main" ]
+Esto garantiza trazabilidad, auditabilidad y despliegues consistentes.
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+🔐 8. Seguridad y Buenas Prácticas
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+- Secretos gestionados vía Kubernetes Secrets
+- Variables no hardcodeadas
+- Imagen Docker multi-stage para reducir superficie de ataque
+- Escaneo de vulnerabilidades integrado en CI
 
-      - name: Build with Maven
-        run: mvn -B clean package -DskipTests
+🧠 9. Decisiones Técnicas y Trade-offs
 
-      - name: Docker login
-        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+- Se utilizó Kubernetes local (kind) para facilitar reproducibilidad.
+- NodePort y port-forward fueron elegidos para acceso local.
+- Los secretos están codificados en base64 solo con fines demostrativos.
 
-      - name: Build & Push image
-        run: |
-          docker build -t bsaulestradah/demo-devops-java:latest .
-          docker push bsaulestradah/demo-devops-java:latest
+👉 En un entorno productivo:
 
-🏁 10. Resultados Finales — Qué se logró
+- Se usaría LoadBalancer / Ingress Controller gestionado
+- Se integrarían Secret Managers (Vault, AWS Secrets Manager)
+- Se habilitaría TLS con certificados gestionados
 
-✔ Aplicación Java funcional, contenedorizada y portable
-✔ Imagen Docker optimizada con multi-stage
-✔ Kubernetes desplegado con buenas prácticas:
- • Deployment
- • Service NodePort
- • Ingress
- • Autoscaling con HPA
- • ConfigMap + Secret
-✔ Terraform gestionando toda la infraestructura
-✔ Pipeline CI/CD listo para producción
-✔ Proyecto totalmente reproducible en cualquier máquina
+🏁 10. Resultados Finales
+
+✔ Aplicación Java funcional
+✔ Dockerización optimizada
+✔ Kubernetes con buenas prácticas
+✔ Infraestructura como Código
+✔ CI/CD automatizado
+✔ Proyecto completamente reproducible
 
 ✨ Autor
 
 Brandon Estrada
 DevOps Engineer & Cloud Enthusiast
-Diseñando soluciones reproducibles, escalables y seguras con Kubernetes + IaC + CI/CD.
+
+Diseñando soluciones reproducibles, escalables y seguras con Kubernetes, IaC y CI/CD.
